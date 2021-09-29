@@ -1,0 +1,213 @@
+\documentclass[12pt]{report}
+
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage[a4paper,margin=1.0in,footskip=0.25in]{geometry}
+\usepackage{listings}  
+\usepackage{color}
+\usepackage{tabto}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+  frame=none
+}
+
+%Title
+\title{\vspace{-3cm}Лабораторная №1\\ \vspace{0.5cm}Вариант 1}
+\author{Жидович Максим, группа №1}
+\date{28 сентября 2021}
+
+\renewcommand\thesection{\arabic{section}}
+
+\begin{document}
+
+\maketitle
+
+\section{Постановка задачи}
+
+Необходимо реализовать метод Гаусса для произвольной СЛАУ $Ax = b$ без выбора ведущего элемента, с выбором ведущего элемента по строке.
+\[
+\begin{bmatrix}
+a_{11} & a_{12}  & \cdots   & a_{1m}   \\
+a_{21} & a_{22}  & \cdots   & a_{2m}  \\
+\vdots & \vdots  & \ddots   & \vdots  \\
+a_{n1} & a_{n2}  & \cdots\  & a_{nm}  \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} \\
+x_{2} \\
+\vdots \\
+x_{n} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b_{1} \\
+b_{2} \\
+\vdots \\
+b_{n} \\
+\end{bmatrix}
+\]
+Предполагается, что $detA \ne 0$. Тогда решение системы существует и оно единственно.
+
+Необходимо найти:
+\begin{enumerate}
+	\item Приближённые решения $x_{1}^*, x_{2}^*$
+	\item Относительные погрешности $\frac{\|x_{1}^* - x\|_{\infty}}{\|x\|_{\infty}}, \frac{\|x_{2}^* - x\|_{\infty}}{\|x\|_{\infty}}$
+\end{enumerate}
+
+\section{Краткая теория}
+
+Алгоритм решения СЛАУ методом Гаусса подразделяется на два этапа.
+\begin{enumerate}
+    \item На первом этапе осуществляется так называемый прямой ход, когда путём элементарных преобразований над строками систему приводят к ступенчатой или треугольной форме. Для этого ненулевые элементы первого столбца всех нижележащих строк обнуляются путём вычитания из каждой строки первой строки, домноженной на отношение первого элемента этих строк к первому элементу первой строки. После того, как указанные преобразования были совершены, первую строку и первый столбец мысленно вычёркивают и продолжают, пока не останется матрица нулевого размера.
+    \item На втором этапе осуществляется так называемый обратный ход, суть которого заключается в том, чтобы выразить все получившиеся базисные переменные через небазисные и построить фундаментальную систему решений, либо, если все переменные являются базисными, то выразить в численном виде единственное решение системы линейных уравнений. Эта процедура начинается с последнего уравнения, из которого выражают соответствующую базисную переменную (а она там всего одна) и подставляют в предыдущие уравнения, и так далее, поднимаясь по «ступенькам» наверх. Каждой строчке соответствует ровно одна базисная переменная, поэтому на каждом шаге, кроме последнего (самого верхнего), ситуация в точности повторяет случай последней строки.
+\end{enumerate}
+\tabАлгоритм решения СЛАУ методом Гаусса с выбором ведущего элемента по строке отличается от вышеприведённого. На $i$-ом шаге прямого хода необходимо определить $\max\limits_{1 \le j \le m}|a_{ij}|$ и путём перестановки поменять между собой 1 и $j$ столбцы. При этом важной частью алгоритма является сохранение перестановок с целью приведения вектора решений в изначальный вид.
+
+\section{Листинг программы}
+
+\lstset{language=Python}
+\lstset{extendedchars=\true}
+
+Код программы, реализующей алгоритм метода Гаусса: 
+
+\begin{lstlisting}
+def gauss_method(a, b):
+    """Function return solution(x) of a system of equations ax = b"""
+    n = len(a)   # size of matrix
+
+    # forward stroke 
+    for k in range(n):
+        for i in range(k + 1, n):
+            factor = a[i][k] / a[k][k]
+            for j in range(k, n):
+                a[i][j] -= a[k][j] * factor
+            b[i] -= b[k] * factor
+
+    x = [0] * n   # solution
+    
+    # reverse stroke
+    for k in range(n - 1, -1, -1):
+        sum_of_previous_x = 0
+        for i in range(k + 1, n):
+            sum_of_previous_x += a[k][i] * x[i]
+        x[k] = (1 / a[k][k]) * (b[k] - sum_of_previous_x)
+
+    return x
+\end{lstlisting}
+
+Код программы, реализующей алгоритм метода Гаусса с выбором ведущего элемента по строке: 
+
+\begin{lstlisting}
+def gauss_method_with_main_element(a, b):
+    """Function return solution(x) of a system of equations ax = b"""
+    n = len(a)   # size of matrix
+    
+    changed_a = a.copy()
+    swaps_x = [i for i in range(n)]   # vector of `x` swaps
+
+    # forward stroke
+    for k in range(n):
+        # find index of max element 
+        max_index = changed_a[k].index(max(changed_a[k], key=abs))
+        
+        # swap `max element` column with current
+        for c in range(n):
+            changed_a[c][max_index], changed_a[c][k] = changed_a[c][k], changed_a[c][max_index]
+        swaps_x[k], swaps_x[max_index] = swaps_x[max_index], swaps_x[k]
+
+        for i in range(k + 1, n):
+            factor = changed_a[i][k] / changed_a[k][k]
+            for j in range(k, n):
+                changed_a[i][j] -= changed_a[k][j] * factor
+            b[i] -= b[k] * factor
+
+    x = [0] * n   # solution
+    
+    # reverse stroke
+    for k in range(n - 1, -1, -1):
+        sum_of_previous_x = 0
+        for i in range(k + 1, n):
+            sum_of_previous_x += changed_a[k][i] * x[swaps_x[i]]
+        x[swaps_x[k]] = (1 / changed_a[k][k]) * (b[k] - sum_of_previous_x)
+
+    return x
+\end{lstlisting}
+
+\section{Выходные данные}
+
+\tabМатрица А размерности 10х10 сгенерированная случайным образом:
+\[
+\begin{bmatrix}
+      -121 &      -247 &       575 &      -817 &      -383 &       437 &       530 &      -459 &       870 &      -158 \\
+      -210 &       712 &       155 &      -179 &       752 &      -229 &      -109 &       285 &       805 &      -563 \\
+       662 &       857 &      -532 &       175 &       559 &      -460 &      -907 &       602 &       984 &       267 \\
+      -436 &      -778 &       759 &       990 &      -114 &      -371 &      -938 &       -42 &       -78 &       145 \\
+      -858 &      -475 &      -131 &      -142 &      -630 &       785 &       453 &      -925 &       144 &       890 \\
+       412 &      -790 &      -452 &       492 &      -152 &      -214 &       519 &       780 &      -836 &      -291 \\
+      -471 &       653 &       318 &       -23 &      -709 &      -331 &      -434 &       798 &      -796 &      -303 \\
+      -267 &      -956 &      -732 &      -160 &      -831 &      -361 &      -871 &       339 &       -29 &      -600 \\
+       276 &      -947 &        -5 &      -714 &      -924 &       668 &       152 &       273 &      -681 &       659 \\
+       316 &       579 &      -607 &      -529 &      -324 &        67 &      -693 &       142 &       906 &      -265 \\
+\end{bmatrix}
+\]
+
+Вектор $Х$ размерности 10 сгенерированный случайным образом:
+\[
+\begin{bmatrix}
+   -841 & -102 & 758 & -948 & 86 & -448 & 790 & 515 & 873 & 925   
+\end{bmatrix}
+\]
+
+Полученный вектор $f$ при решении системы $f = Ax$:
+\[
+\hspace{-1cm}
+\begin{bmatrix}
+   1904282 & 801087 & -259651 & -457381 & 1229943 & -1179437 & -227406 & -1084677 & 434569 & -269835
+\end{bmatrix}
+\]
+
+Вектор $x_{1}^*$ размерности 10 полученный при использовании обычного метода Гаусса:
+\[
+\begin{bmatrix}
+   -841 & -101.999 & 758 & -948 & 85.999 & -448 & 790 & 515 & 872.999 & 925
+\end{bmatrix}
+\]
+
+Вектор $x_{2}^*$ размерности 10 полученный при использовании метода Гаусса с выбором ведущего элемента по строке:
+\[
+\begin{bmatrix}
+   -841 & -102 & 758 & -948 & 86 & -448 & 790 & 515 & 872.999 & 925
+\end{bmatrix}
+\]
+
+Относительная огрешность полученная при использовании обычного метода Гаусса: $8.694404783562407e-15$
+
+Относительная погрешность полученная при использовании метода Гаусса с выбором ведущего элемента: $3.1179934396223807e-15$
+
+\section{Выводы}
+
+\tabПогрешности, полученные при использовании обычного метода Гаусса и метода Гаусса с выбором ведущего элемента, близки к нулю (порядок $10^{-15}$), это говорит о том, что ответ достаточно точен.
+
+\end{document}
