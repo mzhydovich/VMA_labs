@@ -2,8 +2,9 @@
 # Gauss method without main element
 def gauss_method(a, b):
     """Function return solution(x) of a system of linear algebraic equations ax = b"""
-    n = len(a)
+    n = len(a)   # size of matrix
 
+    # forward stroke
     for k in range(n):
         for i in range(k + 1, n):
             factor = a[i][k] / a[k][k]
@@ -11,7 +12,9 @@ def gauss_method(a, b):
                 a[i][j] -= a[k][j] * factor
             b[i] -= b[k] * factor
 
-    x = [0] * n
+    x = [0] * n   # solution
+
+    # reverse stroke
     for k in range(n - 1, -1, -1):
         sum_of_previous_x = 0
         for i in range(k + 1, n):
@@ -23,14 +26,18 @@ def gauss_method(a, b):
 
 # Gauss method with main element
 def gauss_method_with_main_element(a, b):
+    """Function return solution(x) of a system of linear algebraic equations ax = b"""
+    n = len(a)   # size of matrix
 
-    n = len(a)
     changed_a = a.copy()
-    swaps_x = [i for i in range(n)]
+    swaps_x = [i for i in range(n)]   # vector of `x` swaps
 
+    # forward stroke
     for k in range(n):
-        max_index = changed_a[k].index(max(changed_a[k], key= abs))
-        # find max element in row and swap with current
+        # find index of max element
+        max_index = changed_a[k].index(max(changed_a[k], key=abs))
+
+        # swap `max element` column with current
         for c in range(n):
             changed_a[c][max_index], changed_a[c][k] = changed_a[c][k], changed_a[c][max_index]
         swaps_x[k], swaps_x[max_index] = swaps_x[max_index], swaps_x[k]
@@ -41,7 +48,9 @@ def gauss_method_with_main_element(a, b):
                 changed_a[i][j] -= changed_a[k][j] * factor
             b[i] -= b[k] * factor
 
-    x = [0] * n
+    x = [0] * n   # solution
+
+    # reverse stroke
     for k in range(n - 1, -1, -1):
         sum_of_previous_x = 0
         for i in range(k + 1, n):
