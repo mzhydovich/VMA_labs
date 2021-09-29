@@ -24,7 +24,7 @@ def print_matrix(a):
     m = len(a[0])
     for i in range(n):
         for q in range(m):
-            print(f"{a[i][q]:>10}", end= " ")
+            print(f"{a[i][q]:>10}", end=" ")
         print()
 
 
@@ -62,9 +62,9 @@ def subtract(a, b):
 def main():
 
     # generate matrix
-    A = generate_matrix(10, -1000000, 1000000)
+    A = generate_matrix(10, -1000, 1000)
     # generate vector
-    x = generate_vector(10, -1000000, 1000000)
+    x = generate_vector(10, -1000, 1000)
 
     print("Matrix A: ")
     print_matrix(A)
