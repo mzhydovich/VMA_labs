@@ -1,0 +1,248 @@
+\documentclass[12pt]{report}
+
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage[a4paper,margin=1.0in,footskip=0.25in]{geometry}
+\usepackage{listings}  
+\usepackage{color}
+\usepackage{tabto}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+  frame=none
+}
+
+%Title
+\title{\vspace{-3cm}Лабораторная №2}
+\author{Жидович Максим, группа №1}
+\date{6 октября 2021}
+
+\renewcommand\thesection{\arabic{section}}
+
+\begin{document}
+
+\maketitle
+
+\section{Постановка задачи}
+
+Разработать программу численного решения СЛАУ на основе $LDL^{T}$-разложения
+\[
+\begin{bmatrix}
+a_{11} & a_{12}  & \cdots   & a_{1m}   \\
+a_{21} & a_{22}  & \cdots   & a_{2m}  \\
+\vdots & \vdots  & \ddots   & \vdots  \\
+a_{n1} & a_{n2}  & \cdots\  & a_{nm}  \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} \\
+x_{2} \\
+\vdots \\
+x_{n} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b_{1} \\
+b_{2} \\
+\vdots \\
+b_{n} \\
+\end{bmatrix}
+\]
+
+\section{Входные данные}
+
+В работе использовались:
+
+Матрица $A_{1}$ размерности 5х5 сгенерированная случайным образом при $k = 0$:
+\[
+\begin{bmatrix}
+      11 &        -2 &        -4 &        -3 &        -1 & \\
+        -2 &         4 &         0 &        -1 &        -1 & \\
+        -4 &         0 &         4 &         0 &         0 & \\ 
+        -3 &        -1 &         0 &         8 &        -4 & \\ 
+        -1 &        -1 &         0 &        -4 &         6 & \\
+\end{bmatrix}
+\]
+
+Матрица $A_{2}$ размерности 5х5 сгенерированная случайным образом при $k = 1$:
+\[
+\begin{bmatrix}
+      10.1 &        -2 &        -4 &        -3 &        -1 & \\
+        -2 &         4 &         0 &        -1 &        -1 & \\ 
+        -4 &         0 &         4 &         0 &         0 & \\ 
+        -3 &        -1 &         0 &         8 &        -4 & \\ 
+        -1 &        -1 &         0 &        -4 &         6 & \\
+\end{bmatrix}
+\]
+
+Вектор $x$, полученный при $m = 4$ и $n = 5$:
+\[
+\begin{bmatrix}
+   4 & 5 & 6 & 7 & 8   
+\end{bmatrix}
+\]
+
+Вектора $b_{1}, b_{2}$, полученные умножением $A_{1}, A_{2}$ на $x$:
+\[
+\begin{bmatrix}
+   -19 & -3 & 8 & 7 & 11
+\end{bmatrix}
+\]
+\[
+\begin{bmatrix}
+   -22.6 & -3 & 8 & 7 & 11  
+\end{bmatrix}
+\]
+
+\section{Краткая теория}
+
+Mатрица $L$ - нижняя треугольная (за исключением единиц на главной диагонали), хранится на месте нижнего треугольника матрицы $A$, диагональная матрица $D$ хранится на месте главной диагонали матрицы $A$.
+
+Используется алгоритм (5) файла «LDLtRtR разложения», требующий хранения только нижнего треугольника матрицы.
+
+\section{Листинг программы}
+
+\lstset{language=Python}
+\lstset{extendedchars=\true}
+
+Код программы, реализующий $LDL^{T}$-разложение: 
+
+\begin{lstlisting}
+def LDLt(m):
+    """Find LDLt decomposition"""
+    a = [i.copy() for i in m]
+    n = len(a)
+    t = [0] * (n**2)
+
+    # transformate matrix A
+    for k in range(n - 1):
+        for i in range(k + 1, n):
+            t[i] = a[i][k]
+            a[i][k] /= a[k][k]
+            for j in range(k + 1, i + 1):
+                a[i][j] -= a[i][k] * t[j]
+
+    # find matrix L
+    l = [[0] * n for i in range(n)]
+    for i in range(n):
+        l[i][i] = 1
+    for i in range(1, n):
+        for j in range(i):
+            l[i][j] = a[i][j]
+
+    # find matrix D
+    d = [[0] * n for i in range(n)]
+    for i in range(n):
+        d[i][i] = a[i][i]
+
+    return (l, d, transpose(l))
+\end{lstlisting}
+
+Код программы, реализующий нахождение решения с помощью $LDL^{T}$-разложения: 
+
+\begin{lstlisting}
+def solve(a, b):
+    """Solve A*x = b using LDLt decomposition"""
+    l, d, l_t = LDLt(a)
+    n = len(a)
+    x = [0] * n
+
+    # solve L*Y=b
+    y = [0] * n
+    for i in range(n):
+        y[i] = b[i]
+        for j in range(i):
+            y[i] -= l[i][j] * y[j]
+
+    # solve D*Lt*x= b
+    for i in range(n - 1, -1, -1):
+        x[i] = y[i] / d[i][i]
+        for j in range(n - 1, i, -1):
+            x[i] -= l[j][i] * x[j]
+
+    return x
+\end{lstlisting}
+
+\section{Выходные данные}
+
+\hspace{-0.5cm}$L_{1} = 
+\begin{bmatrix}
+       1 &         0 &         0 &         0 &         0 & \\
+-0.18181818181818182 &         1 &         0 &         0 &         0 & \\
+-0.36363636363636365 &      -0.2 &         1 &         0 &         0 & \\
+-0.2727272727272727 &    -0.425 &-0.5833333333333334 &         1 &         0 & \\
+-0.09090909090909091 &    -0.325 &-0.25000000000000006 &-0.897810218978102 &         1 & \\
+\end{bmatrix}
+$
+
+\vspace{0.5cm}\hspace{-0.2cm}$D_{1} = 
+\begin{bmatrix}
+     11 &         0 &         0 &         0 &         0 & \\
+         0 &3.6363636363636362 &         0 &         0 &         0 & \\
+         0 &         0 &       2.4 &         0 &         0 & \\
+         0 &         0 &         0 &5.708333333333334 &         0 & \\
+         0 &         0 &         0 &         0 &0.7737226277372278 & \\
+\end{bmatrix}
+$
+
+\vspace{0.5cm}\hspace{-2.3cm}$L_{2} = 
+\begin{bmatrix}
+       1 &         0 &         0 &         0 &         0 & \\
+-0.19801980198019803 &         1 &         0 &         0 &         0 & \\
+-0.39603960396039606 &-0.21978021978021978 &         1 &         0 &         0 & \\
+-0.297029702970297 &-0.44230769230769235 &-0.6862745098039215 &         1 &         0 & \\
+-0.09900990099009901 &-0.3324175824175824 &-0.2941176470588236 &-0.9871677360219983 &         1 & \\
+\end{bmatrix}
+$
+
+\vspace{0.5cm}\hspace{-1.6cm}$D_{2} = 
+\begin{bmatrix}
+     10.1 &         0 &         0 &         0 &         0 & \\
+         0 &3.603960396039604 &         0 &         0 &         0 & \\
+         0 &         0 &2.241758241758242 &         0 &         0 & \\
+         0 &         0 &         0 &5.348039215686275 &         0 & \\
+         0 &         0 &         0 &         0 &0.09715857011915485 & \\
+\end{bmatrix}
+$
+
+\vspace{0.5cm}\hspace{-2.6cm}$x_{1} = 
+\begin{bmatrix}
+     3.9999999999999885 & 4.999999999999987 & 5.9999999999999885 & 6.999999999999986 & 7.999999999999986
+\end{bmatrix}
+$
+
+\vspace{0.5cm}\hspace{-2.6cm}$x_{2} = 
+\begin{bmatrix}
+     4.000000000000133 & 5.000000000000135 & 6.000000000000133 & 7.000000000000136 & 8.000000000000137
+\end{bmatrix}
+$
+
+\vspace{0.5cm}Относительная огрешность полученная при $k = 0: 1.7763568394002505e-15$
+
+Относительная огрешность полученная при $k = 1: 1.709743457922741e-14$
+
+\section{Выводы}
+
+\tabПогрешности близки к нулю (порядок $10^{-15}$), это говорит о том, что ответ достаточно точен.
+
+\end{document}
