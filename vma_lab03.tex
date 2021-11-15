@@ -1,0 +1,205 @@
+\documentclass[12pt]{report}
+
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage[a4paper,margin=1.0in,footskip=0.25in]{geometry}
+\usepackage{listings}  
+\usepackage{color}
+\usepackage{tabto}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+  frame=none
+}
+
+%Title
+\title{\vspace{-3cm}Лабораторная №3}
+\author{Жидович Максим, группа №1}
+\date{8 ноября 2021}
+
+\renewcommand\thesection{\arabic{section}}
+
+\begin{document}
+
+\maketitle
+
+\section{Постановка задачи}
+
+Разработать программу численного решения СЛАУ методом левой прогонки
+\[
+\begin{bmatrix}
+a_{11} & a_{12}  & \cdots   & a_{1m}   \\
+a_{21} & a_{22}  & \cdots   & a_{2m}  \\
+\vdots & \vdots  & \ddots   & \vdots  \\
+a_{n1} & a_{n2}  & \cdots\  & a_{nm}  \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} \\
+x_{2} \\
+\vdots \\
+x_{n} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b_{1} \\
+b_{2} \\
+\vdots \\
+b_{n} \\
+\end{bmatrix}
+\]
+
+\section{Входные данные}
+
+В работе использовались:
+
+Трёхдиагональная матрица $A$ размерности 10 сформированная следующим образом:
+\[
+a_{ii} = 5(i+1)^{p/2}, i = \overline{0,10},
+\]
+\[
+a_{ij} = (i + 1)^{p/2} + j^{q/2},  i \neq j.
+\]
+при $p = 1$ и $q = 1$.
+\[A = 
+\begin{bmatrix}
+    5 & 2 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    1.4142 & 7.071 & 2.8284 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 2.732 & 8.6602 & 3.4641 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 3.4142 & 10 & 4 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 3.9681 & 11.1803 & 4.4721 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 4.4495 & 12.2474 & 4.899 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 4.8818 & 13.2288 & 5.2915 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 5.278 & 14.1421 & 5.6569 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 & 5.6458 & 15 & 6 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 5.9907 & 15.8114 \\
+\end{bmatrix}
+\]
+
+Вектор $x = (m, m+1, \ldots, n+m-1)$, полученный при $m = 4, n = 10$:
+\[
+\begin{bmatrix}
+   4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13  
+\end{bmatrix}
+\]
+
+Вектор $b$, полученный умножением $A$ на $x$:
+\[
+\begin{bmatrix}
+   25 & 57.9828 & 89.8705 & 122.4853 & 157.4688 & 194.8128 & 234.4305 & 276.2249 & 320.1033 & 277.4365
+\end{bmatrix}
+\]
+
+
+\section{Краткая теория}
+
+
+Метод Гаусса является универсальным прямым методом решения систем линейных алгебраических уравнений. В то же время, как мы уже видели на примере решения СЛАУ с симметричной матрицей, учет специфики задачи позволяет построить алгоритмы с меньшими, по сравнению с универсальными, вычислительными затратами. Рассмотрим метод прогонки – один из важнейших для приложений методов решения СЛАУ. 
+
+Метод прогонки есть метод исключения Гаусса без выбора главного элемента, примененный к системе уравнений с трехдиагональной матрицей.
+
+Алгоритм метода левой прогонки для решения системы имеет следующий вид:
+\begin{enumerate}
+	\item Прямая прогонка – вычисление прогоночных коэффициентов по формулам (7) файла «Метод прогонки»
+	\item Обратная прогонка – вычисление решения по формулам (8) файла «Метод прогонки»
+\end{enumerate}
+
+\section{Листинг программы}
+
+\lstset{language=Python}
+\lstset{extendedchars=\true}
+
+Код программы, реализующий $LDL^{T}$-разложение: 
+
+\begin{lstlisting}
+def progonka(A, b, need_matrix=False):
+	"""Solve system of linear equations using tridiagonal matrix algorithm"""
+
+	n = len(A)
+	y = [0] * n
+	ksi = [0] * n
+	eta = [0] * n
+
+	# find coefficients
+	ksi[n - 1] = -1 * A[n - 1][n - 2] / A[n - 1][n - 1]
+	eta[n - 1] = b[n - 1] / A[n - 1][n - 1]
+
+	for i in range(n - 2, 0, -1):
+		tmp = A[i][i] + A[i][i + 1] * ksi[i + 1]
+		ksi[i] = -1 * A[i][i - 1] / tmp
+		eta[i] = (b[i] - A[i][i + 1] * eta[i + 1]) / tmp
+	eta[0] = (b[0] - A[0][1] * eta[1]) / (A[0][0] + A[0][1] * ksi[1])
+
+	# find solution
+	y[0] = eta[0]
+	for i in range(n - 1):
+		y[i + 1] = ksi[i + 1] * y[i] + eta[i + 1]
+
+
+	# get matrix after direct run
+	if need_matrix is True:
+		matrix = [[0] * n for i in range(n)]
+		matrix[0][0] = 1
+		for i in range(1, n):
+			matrix[i][i - 1] = -1 * ksi[i]
+			matrix[i][i] = 1
+		v = [eta[i] for i in range(n)]
+
+		return matrix, v, y
+
+	return y
+
+\end{lstlisting}
+
+\section{Выходные данные}
+
+Преобразованная матрица $A$ после прямой прогонки: 
+\[
+\begin{bmatrix}
+     1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+     0.2356 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+     0 & 0.3778 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+     0 & 0 & 0.4126 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+     0 & 0 & 0 & 0.4314 & 1 & 0 & 0 & 0 & 0 & 0 \\
+     0 & 0 & 0 & 0 & 0.4432 & 1 & 0 & 0 & 0 & 0 \\
+     0 & 0 & 0 & 0 & 0 & 0.4509 & 1 & 0 & 0 & 0 \\
+     0 & 0 & 0 & 0 & 0 & 0 & 0.4537 & 1 & 0 & 0 \\
+     0 & 0 & 0 & 0 & 0 & 0 & 0 & 0.4436 & 1 & 0 \\
+     0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0.3789 & 1 \\
+\end{bmatrix}
+\]
+
+Вектор приближённого решения:
+\[x^* = 
+\begin{bmatrix}
+     3.(9) & 5 & 6 & 6.(9) & 8 & 8.(9) & 10 & 10.(9) & 12 & 12.(9)
+\end{bmatrix}
+\]
+
+Относительная погрешность: $4.099285014000578 \cdot 10^{-16}$
+
+\section{Выводы}
+
+\tabМетод прогонки является прямым методом, его точность  сопоставима с точностью метода Гаусса. Погрешности близки к нулю (порядок $10^{-16}$), это говорит о том, что ответ достаточно точен.
+
+\end{document}
