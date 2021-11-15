@@ -1,0 +1,249 @@
+\documentclass[12pt]{report}
+
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage[a4paper,margin=1.0in,footskip=0.25in]{geometry}
+\usepackage{listings}  
+\usepackage{color}
+\usepackage{tabto}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+  frame=none
+}
+
+%Title
+\title{\vspace{-3cm}Лабораторная №4}
+\author{Жидович Максим, группа №1}
+\date{10 ноября 2021}
+
+\renewcommand\thesection{\arabic{section}}
+
+\begin{document}
+
+\maketitle
+
+\section{Постановка задачи}
+
+Разработать программу численного решения СЛАУ методами простой итерации и релаксации
+\[
+\begin{bmatrix}
+a_{11} & a_{12}  & \cdots   & a_{1m}   \\
+a_{21} & a_{22}  & \cdots   & a_{2m}  \\
+\vdots & \vdots  & \ddots   & \vdots  \\
+a_{n1} & a_{n2}  & \cdots\  & a_{nm}  \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} \\
+x_{2} \\
+\vdots \\
+x_{n} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b_{1} \\
+b_{2} \\
+\vdots \\
+b_{n} \\
+\end{bmatrix}
+\]
+
+\section{Входные данные}
+
+В работе использовались:
+
+Трёхдиагональная матрица $A$ размерности 10 сформированная следующим образом:
+\[
+a_{ii} = 5(i+1)^{p/2}, i = \overline{0,10},
+\]
+\[
+a_{ij} = (i + 1)^{p/2} + j^{q/2},  i \neq j.
+\]
+при $p = 1$ и $q = 1$.
+\[A = 
+\begin{bmatrix}
+  5.0 & 0.02 & 0.0241 & 0.0273 & 0.03 & 0.0324 & 0.0345 & 0.0365 & 0.0383 & 0.04 \\
+  0.0141 & 7.0711 & 0.0283 & 0.0315 & 0.0341 & 0.0365 & 0.0386 & 0.0406 & 0.0424 & 0.0441 \\
+  0.0173 & 0.0273 & 8.6603 & 0.0346 & 0.0373 & 0.0397 & 0.0418 & 0.0438 & 0.0456 & 0.0473 \\ 
+  0.02 & 0.03 & 0.0341 & 10.0 & 0.04 & 0.0424 & 0.0445 & 0.0465 & 0.0483 & 0.05 \\
+  0.0224 & 0.0324 & 0.0365 & 0.0397 & 11.1803 & 0.0447 & 0.0469 & 0.0488 & 0.0506 & 0.0524 \\ 
+  0.0245 & 0.0345 & 0.0386 & 0.0418 & 0.0445 & 12.2474 & 0.049 & 0.051 & 0.0528 & 0.0545 \\
+  0.0265 & 0.0365 & 0.0406 & 0.0438 & 0.0465 & 0.0488 & 13.2288 & 0.0529 & 0.0547 & 0.0565 \\
+  0.0283 & 0.0383 & 0.0424 & 0.0456 & 0.0483 & 0.0506 & 0.0528 & 14.1421 & 0.0566 & 0.0583 \\ 
+  0.03 & 0.04 & 0.0441 & 0.0473 & 0.05 & 0.0524 & 0.0545 & 0.0565 & 15.0 & 0.06 \\
+  0.0316 & 0.0416 & 0.0458 & 0.0489 & 0.0516 & 0.054 & 0.0561 & 0.0581 & 0.0599 & 15.8114 \\
+\end{bmatrix}
+\]
+
+Вектор $x = (m, m+1, \ldots, n+m-1)$, полученный при $m = 4, n = 10$:
+\[
+\begin{bmatrix}
+   4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13  
+\end{bmatrix}
+\]
+
+Вектор $b$, полученный умножением $A$ на $x$:
+\[
+\hspace{-1.2cm}\begin{bmatrix}
+   22.6934 & 38.3182 & 55.1273 & 73.3223 & 92.8874 & 113.7704 & 135.9107 & 159.2483 & 183.7338 & 209.3174
+\end{bmatrix}
+\]
+
+
+\section{Краткая теория}
+
+
+Метод простой итерации (МПИ) относится к итерационным методам
+решения систем линейных алгебраических уравнений (СЛАУ). Основное
+отличие итерационных методов от рассмотренных ранее прямых методов
+состоит в том, что точное решение может быть получено только в пределе
+некоторого бесконечного процесса приближений.
+
+Метод простой итерации состоит в следующем: выбирается вектор x0
+(например, $x_{0} = 0$ или $x_{0} = b$) и строится последовательность векторов $x^k$ по формуле \[x^{k+1} = Bx^k + b\] Если эта последовательность сходится, т.е. $x^{k} \rightarrow x^{\infty}$ при $k \rightarrow \infty$, то это предельное
+значение $x^{\infty}$ будет решением нашей системы. Действительно, переходя к
+пределу в равенстве, получим $x^{\infty} = Bx^{\infty} + b$.
+
+Количество итераций оценим по формуле: $k \geq \log_{\|B\|} 
+{{(1 - \|B\|)\varepsilon}\over{\|b\|}} - 1$
+
+Метод релаксации — итерационный метод решения систем линейных алгебраических уравнений. Используем формулу:
+\[
+x_{i}^{k+1} = (1 - \omega)x_{i}^k + {{\omega}\over{a_{ii}}} (f_{i} - \sum_{j=1}^{i-1} a_{ij}x_{j}^{k+1} - \sum_{j=i+1}^{n} a_{ij}x_{j}^k)
+\]
+при $\omega = 0.5$, $\omega=1$(это метод Гаусса-Зейделя), $\omega=1.5$.
+
+\section{Листинг программы}
+
+\lstset{language=Python}
+\lstset{extendedchars=\true}
+
+Код программы, реализующий метод простых итераций: 
+
+\begin{lstlisting}
+def sim(A, f):
+    """Find approximate solution of system of linear equations using simple iterations method"""
+
+    n = len(f)
+
+    # find `B` and `b` for view `x = Bx + b`
+    b = np.array([f[i] / A[i, i] for i in range(n)])
+    B = np.copy(A)
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                B[i, j] /= -1 * B[i, i]
+        B[i, i] = 0
+
+    # initial approximation
+    x = np.copy(f)
+
+    # find number of iterations for simple iterations method
+    num_of_iterations = math.ceil(get_num_of_iterations(B, b, epsilon=0.0001))
+
+    # find approximate solution
+    for i in range(num_of_iterations):
+        x = np.matmul(B, x) + b
+
+    return x
+\end{lstlisting}
+
+Реализация метода релаксации:
+
+\begin{lstlisting}
+def relaxation_method(A, f, omega, epsilon):
+    """Find approximate solution of system of linear equations using relaxation method"""
+
+    # initial approximation
+    x = np.copy(f)
+
+    n = len(f)
+
+    # define maximum number of iterations
+    k_max = 1000
+    
+    # find approximate solution
+    for k in range(k_max):
+        x_previous = np.copy(x)
+        for i in range(n):
+            x[i] = (1 - omega) * x[i] + (omega / A[i, i]) * (f[i] - sum(A[i, :i] * x[:i]) - sum(A[i, i+1:] * x[i+1:]))
+
+        if np.linalg.norm(x - x_previous, ord=np.inf) < epsilon:
+            break
+
+    print(f"\nNum of iterations: {k}")
+    return x
+\end{lstlisting}
+
+\section{Выходные данные}
+
+Вектор приближённого решения для метода простых итераций\footnote{Все вычисления проводятся с точностью $\varepsilon = 0.0001$}:
+\[x_{1}^* = 
+\begin{bmatrix}
+     4.0002 & 5.0001 & 6.0001 & 7.0001 & 8.0001 & 9.0001 & 10.0001 & 11.0001 & 12.0001 & 13.0001
+\end{bmatrix}
+\]
+
+Относительная погрешность: $1.840309901179893 \cdot 10^{-5}$
+\vspace{0.5cm}
+
+\noindentВектор приближённого решения для метода релаксации:
+
+при $\omega = 0.5$: 
+\[\begin{bmatrix}
+     3.99995 & 4.99997 & 5.99998 & 6.99999 & 8.00001 & 9.00002 & 10.00004 & 11.00005 & 12.00007 & 13.00008
+\end{bmatrix}\]
+
+Количество итераций: $20$
+
+Относительная погрешность: $6.505371407920043 \cdot 10^{-06}$
+
+\vspace{0.5cm}
+при $\omega = 1$: 
+\[\begin{bmatrix}
+     3.9999 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13
+\end{bmatrix}\]
+
+Количество итераций: $4$
+
+Относительная погрешность: $9.426535791262198 \cdot 10^{-10}$
+
+\vspace{0.5cm}
+при $\omega = 1.5$: 
+\[\begin{bmatrix}
+     3.99998 & 4.99998 & 5.99998 & 6.99999 & 7.99999 & 8.99999 & 9.99999 & 10.99999 & 11.99999 & 12.99999
+\end{bmatrix}\]
+
+Количество итераций: $24$
+
+Относительная погрешность: $1.5233455552714322 \cdot 10^{-06}$
+
+
+
+\section{Выводы}
+
+\tabТочность рассматриваемых методов сопоставима с точностью метода Гаусса. Погрешности близки к нулю (порядок $10^{-6}$), это говорит о том, что ответ достаточно точен.
+
+\end{document}
+
