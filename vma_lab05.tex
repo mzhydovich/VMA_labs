@@ -1,0 +1,195 @@
+\documentclass[12pt]{report}
+
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{caption}
+\usepackage[a4paper,margin=1.0in,footskip=0.25in]{geometry}
+\usepackage{listings}  
+\usepackage{color}
+\usepackage{tabto}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+  frame=none
+}
+
+%Title
+\title{\vspace{-3cm}Лабораторная №5}
+\author{Жидович Максим, группа №1}
+\date{26 ноября 2021}
+
+\renewcommand\thesection{\arabic{section}}
+
+\begin{document}
+
+\maketitle
+
+\section{Постановка задачи}
+
+Разработать программу приведения матрицы к канонической форме Фробениуса
+методом Данилевского (регулярный случай).
+\[
+\begin{bmatrix}
+a_{11} & a_{12}  & \cdots   & a_{1n}   \\
+a_{21} & a_{22}  & \cdots   & a_{2n}  \\
+\vdots & \vdots  & \ddots   & \vdots  \\
+a_{n1} & a_{n2}  & \cdots\  & a_{nn}  \\
+\end{bmatrix}
+\Rightarrow
+\begin{bmatrix}
+p_{1} & p_{2} & \cdots & p_{n-1} & p_{n} \\
+1 & 0 & \cdots & 0 & 0 \\
+0 & 1 & \cdots & 0 & 0 \\
+\vdots & \vdots  & \ddots   & \vdots  \\
+0 & 0 & \cdots & 1 & 0 \\
+\end{bmatrix}
+\]
+
+\section{Входные данные}
+
+В работе использовались:
+
+Матрица $A$ 4 порядка:
+\[ 
+\begin{bmatrix}
+10 & -50  & -5  & 0 \\
+-32 & 43 & -16 & -25 \\
+-39 & -9 & 40 & -46 \\
+22 & 44 & 9 & -33 \\
+\end{bmatrix}
+\]
+
+\section{Краткая теория}
+\tabМетод Данилевского относится к прямым методам решения проблемы
+собственных значений. Метод основан на подобном преобразовании матрицы:
+преобразованиями матрица приводится к канонической форме Фробениуса,
+которая фактически содержит коэффициенты характеристического
+многочлена. 
+
+Способ приведения:
+\begin{enumerate}
+    \item Получить 1 на месте элемента $a_{n, n-1}$, все остальные элементы $n-й$ строки
+обратить в 0.
+Для этого, по аналогии с методом Гаусса (вариант, в котором на месте
+ведущего элемента получается 1), следует разделить $(n-1)$-й столбец матрицы
+$A$ на $a_{n,n-1}$, а потом элементы $(n-1)$-го столбца умножить на $a_{n,i}$ и вычесть из
+соответствующих элементов $i$-го столбца. Это действие эквивалентно
+умножению матрицы A справа на матрицу $M$
+    \item Умножить получившуюся в пункте 1 матрицу слева на матрицу $M^{-1}$. Это делается для того, чтобы получившаяся матрица бала подобна матрице $A$.
+\end{enumerate}
+Повторить действия $n-1$ раз.
+
+\section{Листинг программы}
+
+\lstset{language=Python}
+\lstset{extendedchars=\true}
+
+Код программы, реализующий приведение матрицы к канонической форме Фробениуса методом Данилевского: 
+
+\begin{lstlisting}
+ddef danilevsky_method(A, need_matrices=False):
+	"""Reduction of the matrix to the canonical Frobenius form by the Danilevsky method"""
+
+	n = len(A)
+	
+	matrices = [0] * (n-1)
+
+	for k in range(n-2, -1, -1):
+		M = np.eye(n, n)
+		M[k] = np.ones((1, n))
+
+		# check zero elements
+		while A[k+1, k] > -0.00000001 and A[k+1, k] < 0.00000001:
+			print("\nmain element = 0\nGenerate new matrix: ")
+			A = generate_matrix(n, -50, 50)
+			print(A)
+			print('\n')
+
+		M[k] /= A[k+1, k]
+		M[k] *= ((-1) * A[k+1])
+		M[k, k] /= ((-1) * A[k+1, k])
+
+		# save matrices `M_i`
+		matrices[k] = M
+
+		# M^-1 * A * M
+		A = np.matmul(np.matmul(np.linalg.inv(M), A), M)
+
+
+	if need_matrices:
+		return A.round(), matrices
+	else:
+		return A.round()
+\end{lstlisting}
+
+\section{Выходные данные}
+
+Полученная каноническая форма Фробениуса:
+\[
+\begin{bmatrix}
+60 & 944 & 34483 & -5945475 \\
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+\end{bmatrix}
+\]
+
+Матрицы $M$:
+\[
+M_1 = 
+\begin{bmatrix}
+0.0000154 & -0.00064 & -0.035 & -2.46 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\]
+\[
+M_2 = 
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0.146 & 0.00034 & 0.0284 & 1.08 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\]
+\[
+M_3 = 
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+-2.44 & -4.88 & 0.11 & 3.66 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+\]
+
+Коэффициент $p_1$(полученный из формы Фробениуса): 60
+
+След матрицы $Sp{A}$(должно выполняться равенство $Sp{A} = p_1$): 60
+
+\section{Выводы}
+
+\tabМетод Данилевского является одним из самых экономичных прямых методов. С помощью него мы также можем найти все собственные значения и по ним можем построить полный спектр.
+
+\end{document}
+
